@@ -1,5 +1,5 @@
 import ApiGateway from "../Shared/ApiGateway";
-import { API_BASE, API_USER } from "../Shared/config";
+import { API_USER } from "../Shared/config";
 import type { Book } from "./Book";
 
 function parseBooks(value: unknown): Book[] {
@@ -55,7 +55,3 @@ export class BooksRepository {
     return parseBooks(await this.httpGateway.get(`${this.collectionPath}private`, signal));
   }
 }
-
-// Keep the starter's default import working; tests inject their own gateway.
-const booksRepository = new BooksRepository(new ApiGateway(API_BASE));
-export default booksRepository;

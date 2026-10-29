@@ -19,22 +19,32 @@ npm run preview
 ```
 
 Vite uses classic JSX transformation without a React plugin or Fast Refresh.
-The original JSX entry was renamed to `src/index.jsx`; application behavior is
-unchanged. Production output goes to `dist/`.
+The application entry is `src/index.tsx`. Production output goes to `dist/`.
 
-TypeScript checking is strict for `.ts` and `.tsx` files, including the tooling
-configuration and MobX smoke test. Existing JavaScript is admitted with
-`allowJs`, but `checkJs` is disabled until the application refactor. Dependency
-declaration checking is skipped with `skipLibCheck`; application TypeScript
-still receives strict checks. Vite transpiles code; the build script runs the
-separate TypeScript check first.
+TypeScript checking is strict across the application, tests, and tooling
+configuration. Dependency declaration checking is skipped with `skipLibCheck`.
+Vite transpiles code; the build script runs the separate TypeScript check first.
 
-Vitest runs in its default Node environment. The smoke test makes no network
-requests and checks MobX action batching and reaction disposal.
+Vitest uses Node for logic tests and jsdom for the App integration tests.
+All tests use mocked dependencies and make no live network requests.
 
 The starter loads books from the API configured in `src/Shared/config.ts`.
-Set `API_USER` there to select the user namespace. The Add button remains a
-placeholder.
+Set `API_USER` there to select the user namespace.
+
+`createApplication.ts` constructs the gateway, repository, and BooksController
+once for the root mount. `App` connects loading and disposal to React's mount
+and unmount lifecycle. A new root mount must receive a fresh Controller.
+
+`BooksController` owns observable read-side state; no shared store is needed.
+It prepares display rows and visibility flags for the functional, observed
+`BooksView`. Async updates use MobX actions. New loads abort earlier requests,
+and request identities prevent stale completions from changing the screen.
+Disposal aborts pending work and ignores all later results and load attempts.
+
+The screen preserves `author: name` display order and duplicates. It now shows
+loading, empty, and retryable error states. Retrying clears the prior error and
+list. Row keys are local to each response and do not rely on server IDs.
+The nonfunctional Add placeholder was removed; creation is outside this phase.
 
 The typed API foundation exposes `getBooks(signal?)` and
 `getPrivateBooks(signal?)`, both returning `Promise<Book[]>`. The gateway accepts

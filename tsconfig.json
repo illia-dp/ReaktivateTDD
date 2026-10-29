@@ -7,8 +7,6 @@
     "jsx": "react",
     "strict": true,
     "noEmit": true,
-    "allowJs": true,
-    "checkJs": false,
     "skipLibCheck": true,
     "useDefineForClassFields": true,
     "types": ["node", "vite/client"]
