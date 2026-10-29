@@ -31,9 +31,11 @@ All tests use mocked dependencies and make no live network requests.
 The starter loads books from the API configured in `src/Shared/config.ts`.
 Set `API_USER` there to select the user namespace.
 
-`createApplication.ts` constructs the gateway, repository, and BooksController
-once for the root mount. `App` connects loading and disposal to React's mount
-and unmount lifecycle. A new root mount must receive a fresh Controller.
+`createApplication.ts` supplies the factory that constructs the gateway,
+repository, and BooksController. `App` lazily calls that factory once per mount,
+retains its owned Controller across rerenders, starts loading on mount, and
+disposes it on unmount. Remounting creates a fresh Controller; disposed instances
+are never revived. Changing the factory prop does not replace a mounted Controller.
 
 `BooksController` owns observable read-side state; no shared store is needed.
 It prepares display rows and visibility flags for the functional, observed

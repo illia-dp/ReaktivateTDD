@@ -4,5 +4,4 @@ import { App } from "./App";
 import { createApplication } from "./createApplication";
 import "./styles.css";
 
-const controller = createApplication();
-ReactDOM.render(<App controller={controller} />, document.getElementById("root"));
+ReactDOM.render(<App createController={createApplication} />, document.getElementById("root"));
