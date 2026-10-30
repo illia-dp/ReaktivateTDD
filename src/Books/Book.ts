@@ -1,6 +1,9 @@
 export interface Book {
   name: string;
   author: string;
-  id?: string | number;
-  ownerId?: string;
+}
+
+export interface CreateBookInput {
+  name: string;
+  author: string;
 }

@@ -12,10 +12,27 @@ export default class ApiGateway {
   ) {}
 
   async get(path: string, signal?: AbortSignal): Promise<unknown> {
-    const response = await this.fetcher(`${this.baseUrl}${path}`, {
+    return this.request(path, {
       method: "GET",
       signal,
     });
+  }
+
+  async post(
+    path: string,
+    payload: unknown,
+    signal?: AbortSignal,
+  ): Promise<unknown> {
+    return this.request(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      signal,
+    });
+  }
+
+  private async request(path: string, options: RequestInit): Promise<unknown> {
+    const response = await this.fetcher(`${this.baseUrl}${path}`, options);
 
     if (!response.ok) {
       throw new HttpError(response.status);

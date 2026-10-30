@@ -1,61 +1,67 @@
-# ReaktivateTDD
+# Reaktivate Books
 
-The original CodeSandbox starter, using Vite with React 16.8.6 and MobX 6.3.10.
+A small React application for the Reaktivate Fast-Test Homework. The starter was refactored to separate presentation from application logic using MVP/MVVM, MobX, and TypeScript.
 
-Use Node.js 24.18.0 or a newer Node 24 release and install from the lockfile:
+## Getting started
 
-```sh
+**Requirements:** Node.js 24.18+ (Node 24) and npm.
+
+```bash
 npm ci
 npm start
 ```
 
-Validation and production commands:
+Open [http://localhost:5173](http://localhost:5173).
 
-```sh
+The API URL and username are defined in `src/Shared/config.ts`. Set `API_USER` to a unique nickname before adding books, so your data is kept separate from other demo users.
+
+**API certificate:** The homework notes that the API may use a self-signed certificate. If your browser blocks requests to the API, open an API endpoint such as `https://tdd.demo.reaktivate.com/v1/books/YOUR_NICKNAME/` in the browser and follow its certificate warning instructions before reloading the app. Do not disable certificate verification globally.
+
+## Features
+
+- Browse all books or switch to private books.
+- Add a book using its name and author.
+- View the private-book count in a sticky header.
+- Handle loading, empty states, errors, and retries.
+- Refresh the collections after a successful creation without automatically resubmitting the POST request.
+
+## Project structure
+
+```text
+src/
+  Books/              Book model, repository, shared store, controllers and views
+  Header/             Header controller and view
+  Shared/             API gateway and configuration
+  App.tsx             Application layout and lifecycle
+  createApplication.ts  Dependency wiring and disposal
+  styles.css          Application styles
+```
+
+Views are functional React components observed with `mobx-react`. They render state and forward user actions; controllers handle UI behavior, while `BooksRepository` and `ApiGateway` handle communication with the API.
+
+`BooksStore` holds the collections shared by the list and the header. Each application mount creates its own controllers and store, and disposes them on unmount. This also prevents stale requests from updating an unmounted screen.
+
+## API
+
+The application uses the endpoints documented in the [API Swagger UI](https://tdd.demo.reaktivate.com/api-docs/):
+
+| Method | Endpoint                   | Purpose                        |
+| ------ | -------------------------- | ------------------------------ |
+| GET    | `/v1/books/{user}/`        | All books                      |
+| GET    | `/v1/books/{user}/private` | Private books and header count |
+| POST   | `/v1/books/{user}/`        | Create a book                  |
+
+Book creation sends JSON containing `name` and `author`. A successful request returns HTTP 200 with `{ "status": "ok" }` (verified against the demo API). After creation, the app reloads both collections. Private membership is determined by the private endpoint, not by `ownerId`.
+
+## Testing and build
+
+```bash
 npm run typecheck
 npm test
 npm run build
 npm run preview
 ```
 
-Vite uses classic JSX transformation without a React plugin or Fast Refresh.
-The application entry is `src/index.tsx`. Production output goes to `dist/`.
+Tests use Vitest with mocked API dependencies, plus jsdom for React integration tests. They cover request failures, concurrent loads, disposal, creation, switching between collections, and the shared private-book count. The test suite does not modify live API data.
 
-TypeScript checking is strict across the application, tests, and tooling
-configuration. Dependency declaration checking is skipped with `skipLibCheck`.
-Vite transpiles code; the build script runs the separate TypeScript check first.
-
-Vitest uses Node for logic tests and jsdom for the App integration tests.
-All tests use mocked dependencies and make no live network requests.
-
-The starter loads books from the API configured in `src/Shared/config.ts`.
-Set `API_USER` there to select the user namespace.
-
-`createApplication.ts` supplies the factory that constructs the gateway,
-repository, and BooksController. `App` lazily calls that factory once per mount,
-retains its owned Controller across rerenders, starts loading on mount, and
-disposes it on unmount. Remounting creates a fresh Controller; disposed instances
-are never revived. Changing the factory prop does not replace a mounted Controller.
-
-`BooksController` owns observable read-side state; no shared store is needed.
-It prepares display rows and visibility flags for the functional, observed
-`BooksView`. Async updates use MobX actions. New loads abort earlier requests,
-and request identities prevent stale completions from changing the screen.
-Disposal aborts pending work and ignores all later results and load attempts.
-
-The screen preserves `author: name` display order and duplicates. It now shows
-loading, empty, and retryable error states. Retrying clears the prior error and
-list. Row keys are local to each response and do not rely on server IDs.
-The nonfunctional Add placeholder was removed; creation is outside this phase.
-
-The typed API foundation exposes `getBooks(signal?)` and
-`getPrivateBooks(signal?)`, both returning `Promise<Book[]>`. The gateway accepts
-an injected fetch function, checks HTTP status before parsing JSON, and forwards
-optional abort signals. The repository validates response arrays and records.
-Names and authors must be strings; IDs may be strings or numbers and owner IDs
-may be strings. Both metadata fields may be absent. Null or wrongly typed fields
-are rejected, extra fields are ignored, and duplicates and ordering are preserved.
-
-Private membership comes from the private endpoint, never from owner IDs.
-Creation is intentionally absent until the POST payload and response contract
-are verified. API tests use mocked responses and never contact the live service.
+The project uses Vite instead of the starter's Create React App setup because the original Webpack toolchain was incompatible with the Node.js version used during development. React, MobX, and `mobx-react` remain on the starter's versions.

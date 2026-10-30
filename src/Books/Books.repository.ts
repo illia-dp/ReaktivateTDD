@@ -1,6 +1,6 @@
-import ApiGateway from "../Shared/ApiGateway";
+import type ApiGateway from "../Shared/ApiGateway";
 import { API_USER } from "../Shared/config";
-import type { Book } from "./Book";
+import type { Book, CreateBookInput } from "./Book";
 
 function parseBooks(value: unknown): Book[] {
   if (!Array.isArray(value)) {
@@ -17,23 +17,12 @@ function parseBooks(value: unknown): Book[] {
       !("author" in item) ||
       typeof item.author !== "string"
     ) {
-      throw new Error(`Books API record ${index} must contain string name and author fields.`);
+      throw new Error(
+        `Books API record ${index} must contain string name and author fields.`,
+      );
     }
 
-    const book: Book = { name: item.name, author: item.author };
-    if ("id" in item) {
-      if (typeof item.id !== "string" && typeof item.id !== "number") {
-        throw new Error(`Books API record ${index} has an invalid id.`);
-      }
-      book.id = item.id;
-    }
-    if ("ownerId" in item) {
-      if (typeof item.ownerId !== "string") {
-        throw new Error(`Books API record ${index} has an invalid ownerId.`);
-      }
-      book.ownerId = item.ownerId;
-    }
-    return book;
+    return { name: item.name, author: item.author };
   });
 }
 
@@ -41,7 +30,7 @@ export class BooksRepository {
   private readonly collectionPath: string;
 
   constructor(
-    private readonly httpGateway: Pick<ApiGateway, "get">,
+    private readonly httpGateway: Pick<ApiGateway, "get" | "post">,
     user: string = API_USER,
   ) {
     this.collectionPath = `/${encodeURIComponent(user)}/`;
@@ -52,6 +41,28 @@ export class BooksRepository {
   }
 
   async getPrivateBooks(signal?: AbortSignal): Promise<Book[]> {
-    return parseBooks(await this.httpGateway.get(`${this.collectionPath}private`, signal));
+    return parseBooks(
+      await this.httpGateway.get(`${this.collectionPath}private`, signal),
+    );
+  }
+
+  async createBook(
+    input: CreateBookInput,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    const response = await this.httpGateway.post(
+      this.collectionPath,
+      { name: input.name, author: input.author },
+      signal,
+    );
+    if (
+      typeof response !== "object" ||
+      response === null ||
+      Array.isArray(response) ||
+      !("status" in response) ||
+      response.status !== "ok"
+    ) {
+      throw new Error("Books API did not confirm creation.");
+    }
   }
 }

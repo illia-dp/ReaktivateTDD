@@ -1,14 +1,28 @@
 import React, { useEffect, useState } from "react";
-import type { BooksController } from "./Books/Books.controller";
+import type { Application } from "./createApplication";
 import { BooksView } from "./Books/Books.view";
+import { CreateBookView } from "./Books/CreateBook.view";
+import { HeaderView } from "./Header/Header.view";
 
-export function App({ createController }: { createController: () => BooksController }) {
-  const [controller] = useState(createController);
+export function App({
+  createApplication,
+}: {
+  createApplication: () => Application;
+}) {
+  const [application] = useState(createApplication);
 
   useEffect(() => {
-    void controller.load();
-    return controller.dispose;
-  }, [controller]);
+    void application.start();
+    return application.dispose;
+  }, [application]);
 
-  return <BooksView controller={controller} />;
+  return (
+    <>
+      <HeaderView controller={application.header} />
+      <main>
+        <BooksView controller={application.books} />
+        <CreateBookView controller={application.createBook} />
+      </main>
+    </>
+  );
 }

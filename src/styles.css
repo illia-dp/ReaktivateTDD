@@ -1,8 +1,127 @@
-.App {
-  font-family: arial;
-  text-align: center;
+* {
+  box-sizing: border-box;
 }
 
 body {
-  font-family: arial;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  line-height: 1.5;
+  color: #243248;
+  background: #f5f7fa;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px max(16px, calc((100% - 900px) / 2));
+  background: #fff;
+  border-bottom: 1px solid #ccd5e0;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.app-header button {
+  margin-left: 12px;
+}
+
+main {
+  max-width: 900px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+section {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #dce2ea;
+  border-radius: 6px;
+}
+
+section h2 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  padding: 7px 13px;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #75859a;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button[aria-pressed="true"],
+button[type="submit"] {
+  color: #fff;
+  background: #234d85;
+  border-color: #234d85;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid #d18b12;
+  outline-offset: 2px;
+}
+
+.book-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.book-row {
+  padding: 10px 0;
+  border-bottom: 1px solid #edf0f5;
+}
+
+form fieldset {
+  max-width: 512px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+form legend {
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+form label {
+  display: block;
+  margin-top: 11px;
+}
+
+form input {
+  display: block;
+  width: 100%;
+  margin-bottom: 13px;
+  padding: 8px;
+  border: 1px solid #75859a;
+  border-radius: 4px;
+}
+
+[role="alert"] {
+  color: #a12626;
 }

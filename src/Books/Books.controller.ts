@@ -1,73 +1,74 @@
-import { action, computed, makeObservable, observable, runInAction } from "mobx";
-import type { BooksRepository } from "./Books.repository";
-
-interface BookRow {
-  readonly key: string;
-  readonly text: string;
-}
+import { action, computed, makeObservable, observable } from "mobx";
+import { BooksStore, type BooksMode } from "./Books.store";
 
 export class BooksController {
-  rows: readonly BookRow[] = [];
-  status: "loading" | "success" | "error" = "loading";
-  error = "";
-  private requestId = 0;
-  private pending?: AbortController;
+  mode: BooksMode = "all";
   private disposed = false;
 
-  constructor(private readonly repository: Pick<BooksRepository, "getBooks">) {
+  constructor(private readonly store: BooksStore) {
     makeObservable(this, {
-      rows: observable.ref,
-      status: observable,
-      error: observable,
+      mode: observable,
+      rows: computed,
+      status: computed,
+      error: computed,
       loadingHidden: computed,
       errorHidden: computed,
       emptyHidden: computed,
+      allSelected: computed,
+      privateSelected: computed,
+      selectAll: action.bound,
+      selectPrivate: action.bound,
       load: action.bound,
-      dispose: action.bound,
     });
   }
 
-  get loadingHidden(): boolean { return this.status !== "loading"; }
-  get errorHidden(): boolean { return this.status !== "error"; }
-  get emptyHidden(): boolean { return this.status !== "success" || this.rows.length !== 0; }
+  get rows() {
+    const collection = this.store.collections[this.mode];
+    return collection.books.map((book, index) => ({
+      key: `${this.mode}:${index}`,
+      text: `${book.author}: ${book.name}`,
+    }));
+  }
+  get status() {
+    return this.store.collections[this.mode].status;
+  }
+  get error(): string {
+    return this.store.collections[this.mode].error;
+  }
+  get loadingHidden(): boolean {
+    return this.status !== "idle" && this.status !== "loading";
+  }
+  get errorHidden(): boolean {
+    return this.status !== "error";
+  }
+  get emptyHidden(): boolean {
+    return this.status !== "success" || this.rows.length !== 0;
+  }
+  get allSelected(): boolean {
+    return this.mode === "all";
+  }
+  get privateSelected(): boolean {
+    return this.mode === "private";
+  }
+
+  selectAll(): void {
+    this.selectMode("all");
+  }
+  selectPrivate(): void {
+    this.selectMode("private");
+  }
+
+  private selectMode(mode: BooksMode): void {
+    if (this.disposed) return;
+    this.mode = mode;
+    void this.store.ensureLoaded(mode);
+  }
 
   async load(): Promise<void> {
-    if (this.disposed) return;
-    const requestId = ++this.requestId;
-    this.pending?.abort();
-    const pending = new AbortController();
-    this.pending = pending;
-    this.status = "loading";
-    this.error = "";
-    if (this.rows.length > 0) this.rows = [];
-
-    try {
-      const books = await this.repository.getBooks(pending.signal);
-      if (this.disposed || requestId !== this.requestId) return;
-      runInAction(() => {
-        // Identity is local to this response: server IDs can be absent or duplicated.
-        this.rows = books.map((book, index) => ({
-          key: `${requestId}:${index}`,
-          text: `${book.author}: ${book.name}`,
-        }));
-        this.status = "success";
-      });
-    } catch {
-      if (this.disposed || requestId !== this.requestId) return;
-      runInAction(() => {
-        this.status = "error";
-        this.error = "Could not load books. Please try again.";
-      });
-    } finally {
-      if (requestId === this.requestId) this.pending = undefined;
-    }
+    if (!this.disposed) await this.store.refresh(this.mode);
   }
 
   dispose(): void {
-    if (this.disposed) return;
     this.disposed = true;
-    ++this.requestId;
-    this.pending?.abort();
-    this.pending = undefined;
   }
 }
